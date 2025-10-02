@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -24,9 +25,7 @@ func LastIndex[T comparable](s []T, t T) int {
 func ReplaceCmdTmpl(s []string, param string) []string {
 	res := slices.Clone(s)
 	for i := range res {
-		if res[i] == "{}" {
-			res[i] = param
-		}
+		res[i] = strings.ReplaceAll(res[i], "{}", param)
 	}
 	return res
 }
