@@ -88,7 +88,7 @@ func run(diffCmdTmpl []string, cmdTmpl []string, params []string) error {
 		f.WriteTo(os.Stdout)
 	} else {
 		for i := range len(params) - 1 {
-			diffCmd := append(diffCmdTmpl, PathForParam(dir, params[i]), PathForParam(dir, params[i+1]))
+			diffCmd := append(slices.Clone(diffCmdTmpl), PathForParam(dir, params[i]), PathForParam(dir, params[i+1]))
 			c := exec.Command(diffCmd[0], diffCmd[1:]...)
 			c.Stdin = os.Stdin
 			c.Stdout = os.Stdout
@@ -112,12 +112,20 @@ func main() {
 	}
 
 	diffCmd := []string{"diff"}
+	if diffCmdEnv, ok := os.LookupEnv("CMDIFF_DIFF"); ok {
+		diffCmd = []string{"/bin/bash", "-c", diffCmdEnv + " " + `"$@"`, "--"}
+	}
 	cmdTmpl := args[:sepIdx]
 	if idx := slices.Index(cmdTmpl, "--"); idx != -1 {
 		diffCmd = cmdTmpl[:idx]
 		cmdTmpl = cmdTmpl[idx+1:]
 	}
+
 	params := args[sepIdx+1:]
+
+	if len(diffCmd) == 0 {
+		log.Fatal("diff cmd not specified")
+	}
 
 	if err := run(diffCmd, cmdTmpl, params); err != nil {
 		log.Fatal(err)
